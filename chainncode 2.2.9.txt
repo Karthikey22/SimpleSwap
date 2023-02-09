@@ -1,0 +1,26 @@
+
+
+kubectl cp /home/lohith/hf/fabcar CLI_POD:/opt/gopath/src/github.com/hyperledger/fabric/peer/fabcar -n peers
+peer lifecycle chaincode package basic.tar.gz -p /opt/gopath/src/github.com/hyperledger/fabric/peer/fabcar --label basic_1.0 
+
+peer lifecycle chaincode install basic.tar.gz 
+
+peer lifecycle chaincode queryinstalled 
+
+export ORDERER_CA=/var/hyperledger/tls/server/cert/key.pem 
+
+export ORDERER_CONTAINER=ord1-hlf-ord.orderers.svc.cluster.local:7050 
+
+export ID=basic_1.0:d14a94f52067abe5830fafecf4a9ac236fb5f7298ca1f5c4a86b9e44b9d1cc5e 
+
+peer lifecycle chaincode approveformyorg -o $ORDERER_CONTAINER --tls --cafile $ORDERER_CA --channelID mychannel --name basic --version 1.0 --package-id $ID --sequence 1 
+
+peer lifecycle chaincode commit -o $ORDERER_CONTAINER --tls --cafile $ORDERER_CA --channelID mychannel --name basic --version 1.0 --sequence 1 --peerAddresses $CORE_PEER_ADDRESS --tlsRootCertFiles $CORE_PEER_TLS_ROOTCERT_FILE
+
+peer chaincode invoke -o $ORDERER_CONTAINER --tls --cafile $ORDERER_CA --channelID mychannel --name basic --peerAddresses $CORE_PEER_ADDRESS --tlsRootCertFiles $CORE_PEER_TLS_ROOTCERT_FILE -c '{"function":"InitLedger","args":[]}' 
+
+peer chaincode query -C mychannel -n basic -c '{"Args":["QueryAllCars"]}' 
+
+peer chaincode invoke -o $ORDERER_CONTAINER --tls --cafile $ORDERER_CA --channelID mychannel --name basic --peerAddresses $CORE_PEER_ADDRESS --tlsRootCertFiles $CORE_PEER_TLS_ROOTCERT_FILE -c '{"function":"CreateCar","args":["dddd","ffff","ggg","ttt","lll"]}' 
+
+peer chaincode invoke -o $ORDERER_CONTAINER --tls --cafile $ORDERER_CA --channelID mychannel --name basic --peerAddresses $CORE_PEER_ADDRESS --tlsRootCertFiles $CORE_PEER_TLS_ROOTCERT_FILE -c '{"function":"QueryCar","args":["dddd"]}'
